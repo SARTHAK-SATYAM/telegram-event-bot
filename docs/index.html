@@ -2,104 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EventBot - AI Event Planner</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EventBot - Your AI Event Planner</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
   <style>
     body {
-      font-family: 'Poppins', sans-serif;
-      background-image: url('https://images.unsplash.com/photo-1601597111414-0c6e1fe35353');
+      background: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=80') no-repeat center center fixed;
       background-size: cover;
-      background-attachment: fixed;
-      background-position: center;
     }
     .glass {
-      background: rgba(255, 255, 255, 0.8);
-      backdrop-filter: blur(12px);
-    }
-    .fade-in {
-      animation: fadeIn 1.2s ease-in-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      backdrop-filter: blur(10px);
+      background-color: rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
   </style>
 </head>
-<body class="text-gray-800">
+<body class="font-sans text-white">
 
   <!-- Hero Section -->
-  <section class="text-center py-24 px-4 glass shadow-xl fade-in max-w-4xl mx-auto mt-8 rounded-xl">
-    <h1 class="text-5xl font-bold text-blue-800">EventBot 🎉</h1>
-    <p class="mt-4 text-lg text-gray-700 max-w-2xl mx-auto">Plan birthdays, weddings, or corporate events in seconds. AI-powered. 100% free. Telegram-ready.</p>
-    <a href="https://t.me/enigma_event_bot" target="_blank" class="mt-8 inline-block bg-blue-600 text-white px-6 py-3 rounded-full text-lg hover:bg-blue-700 transition">Try It on Telegram</a>
+  <section class="min-h-screen flex flex-col justify-center items-center px-4 glass text-center">
+    <h1 class="text-5xl font-bold mb-4" data-aos="fade-down">Plan Events Instantly with AI 🎉</h1>
+    <p class="text-xl max-w-xl mb-6" data-aos="fade-up">From birthdays to business meetings, get curated plans with one message. It's smart, fast, and 100% free.</p>
+    <a href="https://t.me/enigma_event_bot" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full text-lg transition" data-aos="zoom-in">Try on Telegram</a>
   </section>
 
-  <!-- Features Section -->
-  <section class="py-16 px-6 max-w-6xl mx-auto text-center fade-in">
-    <h2 class="text-3xl font-bold mb-10 text-white">✨ What Can It Do?</h2>
-    <div class="grid md:grid-cols-3 gap-8 text-white">
-      <div class="glass p-6 rounded-xl">
-        <h3 class="text-xl font-bold mb-2">🎂 Birthday Planner</h3>
-        <p>Get ideas for themes, venues, activities, and more in seconds.</p>
+  <!-- Features -->
+  <section class="py-16 bg-black bg-opacity-60">
+    <div class="text-center mb-12" data-aos="fade-up">
+      <h2 class="text-3xl font-bold">What Can It Do?</h2>
+    </div>
+    <div class="grid md:grid-cols-3 gap-8 px-6 max-w-6xl mx-auto">
+      <div class="glass p-6 rounded-lg" data-aos="fade-right">
+        <h3 class="text-xl font-semibold text-yellow-300 mb-2">🎂 Birthday Planner</h3>
+        <p>Suggests themes, venues, budgets and gift ideas for all age groups.</p>
       </div>
-      <div class="glass p-6 rounded-xl">
-        <h3 class="text-xl font-bold mb-2">💼 Business Events</h3>
-        <p>Plan conferences, product launches, or corporate meetups effortlessly.</p>
+      <div class="glass p-6 rounded-lg" data-aos="fade-up">
+        <h3 class="text-xl font-semibold text-green-300 mb-2">💼 Business Events</h3>
+        <p>Plans corporate events, launch parties, and networking sessions instantly.</p>
       </div>
-      <div class="glass p-6 rounded-xl">
-        <h3 class="text-xl font-bold mb-2">💍 Weddings & More</h3>
-        <p>AI-curated wedding plans including venues, themes, and budgets.</p>
+      <div class="glass p-6 rounded-lg" data-aos="fade-left">
+        <h3 class="text-xl font-semibold text-pink-300 mb-2">💍 Wedding Plans</h3>
+        <p>AI-curated wedding styles, themes, vendors and timelines for your dream day.</p>
       </div>
     </div>
   </section>
 
-  <!-- How It Works Section -->
-  <section class="py-16 px-6 bg-white text-gray-800 fade-in">
-    <h2 class="text-3xl font-bold text-center mb-10">🚀 How It Works</h2>
-    <div class="max-w-4xl mx-auto grid md:grid-cols-3 gap-6 text-center">
-      <div>
-        <div class="text-5xl mb-2">1️⃣</div>
-        <p>Start the Telegram bot</p>
-      </div>
-      <div>
-        <div class="text-5xl mb-2">2️⃣</div>
-        <p>Select an event type & describe your need</p>
-      </div>
-      <div>
-        <div class="text-5xl mb-2">3️⃣</div>
-        <p>Get an instant, curated plan from AI</p>
-      </div>
+  <!-- Testimonials -->
+  <section class="py-20 bg-gradient-to-br from-black via-gray-900 to-gray-800">
+    <div class="text-center mb-10" data-aos="fade-up">
+      <h2 class="text-3xl font-bold">What Users Say</h2>
     </div>
-  </section>
-
-  <!-- Testimonials Section -->
-  <section class="py-16 bg-gray-100 fade-in">
-    <h2 class="text-3xl font-bold text-center text-gray-800 mb-10">💬 What Users Say</h2>
-    <div class="max-w-5xl mx-auto grid md:grid-cols-3 gap-6 text-center">
-      <div class="glass p-6 rounded-lg shadow">
-        <p class="italic text-gray-700">“I planned my kid’s birthday party in under 5 minutes. Amazing tool!”</p>
-        <div class="mt-4 font-semibold text-blue-800">— Priya M.</div>
+    <div class="max-w-3xl mx-auto space-y-8 text-center">
+      <div class="glass p-6" data-aos="fade-right">
+        <p class="text-lg italic">"I planned my daughter’s birthday in 10 minutes. This bot is a life-saver!"</p>
+        <div class="mt-2 font-semibold text-yellow-400">— Priya M., Mumbai</div>
       </div>
-      <div class="glass p-6 rounded-lg shadow">
-        <p class="italic text-gray-700">“Perfect for corporate planning on the fly. Highly recommend!”</p>
-        <div class="mt-4 font-semibold text-blue-800">— Ankit R.</div>
-      </div>
-      <div class="glass p-6 rounded-lg shadow">
-        <p class="italic text-gray-700">“The AI suggestions were surprisingly accurate and super helpful!”</p>
-        <div class="mt-4 font-semibold text-blue-800">— Neha S.</div>
+      <div class="glass p-6" data-aos="fade-left">
+        <p class="text-lg italic">"I use it for team meetings and client events. Super useful!"</p>
+        <div class="mt-2 font-semibold text-green-400">— Rohan S., Bengaluru</div>
       </div>
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="text-center py-8 bg-white text-gray-600 text-sm">
-    © 2025 EventBot by Sarthak | Built with ❤️ using AI |
-    <a href="https://t.me/enigma_event_bot" class="text-blue-600 underline">Chat Now</a>
+  <footer class="text-center py-6 text-gray-300 text-sm bg-black bg-opacity-70">
+    © 2025 EventBot by Sarthak | Built with ❤️ using GPT & Telegram Bot API
   </footer>
 
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init({ duration: 1000 });
+  </script>
 </body>
 </html>
