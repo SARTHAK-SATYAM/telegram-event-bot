@@ -1,106 +1,176 @@
+import logging
+import asyncio
 import os
+import json
 import requests
-from dotenv import load_dotenv
+import datetime
+import re
+import random
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
+from dotenv import load_dotenv
 import gspread
-from datetime import datetime
+from oauth2client.service_account import ServiceAccountCredentials
+import nest_asyncio
 
-# Load env variables
+nest_asyncio.apply()
 load_dotenv()
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-HF_API_KEY = os.getenv("HF_API_KEY")
-HF_MODEL = "HuggingFaceH4/zephyr-7b-beta"
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+HF_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
 GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")
 
-# Hugging Face header
-headers = {
-    "Authorization": f"Bearer {HF_API_KEY}",
-    "Content-Type": "application/json"
-}
+# Logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Connect to Google Sheets
-gc = gspread.service_account(filename="creds.json")
+# Google Sheets Setup
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+credentials = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+gc = gspread.authorize(credentials)
 sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
 
-# /start handler
+# Hugging Face API Call
+async def query_huggingface(prompt):
+    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 150,
+            "temperature": 0.7,
+            "do_sample": True
+        }
+    }
+    response = requests.post(
+        "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
+        headers=headers,
+        json=payload
+    )
+    result = response.json()
+    if isinstance(result, list):
+        return result[0]['generated_text'].strip()
+    elif "error" in result:
+        return "⚠️ Sorry, the AI service is temporarily unavailable. Please try again later."
+    return "🤖 Something went wrong."
+
+# Format into bullet points
+def format_response(raw_text, prompt):
+    cleaned = raw_text.replace(prompt, '').strip()
+    cleaned = re.sub(r'\s+', ' ', cleaned)
+    sentences = re.split(r'\. ', cleaned)
+    emojis = ["🎯", "📌", "✨", "💡", "🎉", "📝", "📍"]
+    bullet_points = []
+    for i, sentence in enumerate(sentences):
+        sentence = sentence.strip().strip('.')
+        if sentence and len(sentence) < 160:
+            emoji = emojis[i % len(emojis)]
+            bullet_points.append(f"{emoji} {sentence}.")
+        if len(bullet_points) == 5:
+            break
+    return bullet_points
+
+# Follow-up Suggestions
+def get_follow_up_questions(event_type):
+    follow_ups = {
+        "birthday": [
+            "🎁 Want suggestions for birthday return gifts?",
+            "📍 Need help finding a venue nearby?"
+        ],
+        "business": [
+            "📅 Need help scheduling or organizing sessions?",
+            "📦 Want catering or vendor suggestions?"
+        ],
+        "wedding": [
+            "💒 Need help with wedding themes or outfits?",
+            "🎶 Looking for music or entertainment suggestions?"
+        ]
+    }
+    return follow_ups.get(event_type, [])
+
+# Random outro message
+sign_offs = [
+    "😊 Hope this helps you plan better!",
+    "🚀 Ready to make your event unforgettable?",
+    "🎈 Let's make it amazing together!",
+    "📲 Type anything else or click /start to begin again."
+]
+
+# Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("🎉 Birthday", callback_data='birthday')],
-        [InlineKeyboardButton("💍 Wedding", callback_data='wedding')],
-        [InlineKeyboardButton("💼 Corporate", callback_data='corporate')]
+        [InlineKeyboardButton("🎂 Birthday", callback_data='birthday')],
+        [InlineKeyboardButton("💼 Business", callback_data='business')],
+        [InlineKeyboardButton("💍 Wedding", callback_data='wedding')]
     ]
-    markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Hi! 👋 What type of event are you planning?", reply_markup=markup)
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Hi! What type of event are you planning?", reply_markup=reply_markup)
 
-# Button click handler
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Handle event type button click
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    context.user_data["event_type"] = query.data
-    await query.edit_message_text(
-        text=f"Great! You selected *{query.data.title()}*. Now tell me your city, budget, or preferences.",
-        parse_mode="Markdown"
+    context.user_data['event_type'] = query.data
+    await query.message.reply_text(f"Great! Now send me a short description of your {query.data} event.")
+
+# Handle message
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    event_type = context.user_data.get('event_type')
+    if not event_type:
+        await update.message.reply_text("Please choose an event type first using /start.")
+        return
+
+    user_query = update.message.text
+    await update.message.chat.send_action(action="typing")
+
+    # Natural language prompt for AI
+    prompt = (
+        f"You're an event planner AI. "
+        f"Generate a concise {event_type} event plan for: {user_query}. "
+        f"Format it into 4-5 bullet points under 100 words. Be clear, fun, and creative."
     )
 
-# Handle user input
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_input = update.message.text
-    user_id = update.effective_user.id
-    event_type = context.user_data.get("event_type", "event")
-    await update.message.reply_text("🤖 Thinking...")
+    result = await query_huggingface(prompt)
+    bullet_output = format_response(result, prompt)
 
+    await update.message.reply_text(f"📅 Here's your *{event_type.title()} Event Plan*:", parse_mode='Markdown')
+    for point in bullet_output:
+        await asyncio.sleep(1.1)
+        await update.message.reply_text(point)
+
+    await asyncio.sleep(0.8)
+    await update.message.reply_text(random.choice(sign_offs))
+
+    # Follow-up questions
+    follow_ups = get_follow_up_questions(event_type)
+    if follow_ups:
+        await asyncio.sleep(1)
+        await update.message.reply_text("Need more help?", reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(text=question, callback_data=f"followup:{question}")]
+            for question in follow_ups
+        ]))
+
+    # Log to Google Sheets
     try:
-        prompt = (
-            f"Give a short and clear 5-line suggestion for a {event_type} based on: {user_input}. "
-            f"Only include venue, theme, budget, and unique ideas. Be concise."
-        )
-        payload = {"inputs": prompt}
-        response = requests.post(
-            f"https://api-inference.huggingface.co/models/{HF_MODEL}",
-            headers=headers,
-            json=payload
-        )
-        result = response.json()
-        print("HF RAW RESPONSE:", result)
-
-        if isinstance(result, list) and "generated_text" in result[0]:
-            reply = result[0]["generated_text"][len(prompt):].strip()
-            lines = reply.replace("\n\n", "\n").split("\n")
-            lines = [line.strip() for line in lines if line.strip()]
-            formatted = "\n".join(f"🔹 {line}" for line in lines[:5])
-            if len(formatted) > 1000:
-                formatted = formatted[:1000] + "...\n\n⚠️ Trimmed for clarity."
-
-            # Log to Google Sheets
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            sheet.append_row([str(user_id), event_type, user_input, formatted, timestamp])
-
-            await update.message.reply_text(formatted or "🤷 No response generated.")
-        else:
-            await update.message.reply_text("⚠️ AI model error. Try again.")
-            print("HF Error:", result)
-
+        sheet.append_row([
+            update.effective_user.username,
+            event_type,
+            user_query,
+            result,
+            str(datetime.datetime.now())
+        ])
     except Exception as e:
-        print("Exception:", e)
-        await update.message.reply_text("❌ Something went wrong. Try again later.")
+        logger.warning(f"[Sheets] Logging failed: {e}")
 
-# Bot launcher
+# Main app
 async def main():
-    app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
+    app.add_handler(CallbackQueryHandler(button_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
     print("🤖 Bot is live...")
     await app.run_polling()
 
-# Run bot with asyncio fix
-if __name__ == "__main__":
-    import asyncio
-    try:
-        asyncio.get_event_loop().run_until_complete(main())
-    except RuntimeError:
-        import nest_asyncio
-        nest_asyncio.apply()
-        asyncio.get_event_loop().run_until_complete(main())
+if __name__ == '__main__':
+    asyncio.run(main())
