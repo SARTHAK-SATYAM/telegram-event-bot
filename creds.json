@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "solid-skill-428219-s6",
+  "private_key_id": "7f972e1e4d10c72235ec20568c385513cb420fcd",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC5z+5PFZ9EUsGh\ngRD0H5m1/rZC3J2x2YWFD5DOxz9Exo49UApvCbZ09L4xdWOXZd/lBNA4rcaQcPo7\nunV6kSdtO1OFFHf6LYU6u8DQrJGD1r1sr5J4kNz3PuaJFeftD+f7jQNwVxqRqcIz\nx+s6SidUkuMuVRby17aRMtBRMuZ7qbEu6OM+5LtJiwlgBTocNqh0qpTABuox7vYj\nNjPtVZ9Ypq7lV5qLMIqsdy6H9dq9o9qkstB8NcpazXDdoO+W60qayrDw1gX+t11k\n42WkBVExZ1etUIAQmwHSN5L5x27quw67nUlTg3jxE4BD6SuiHJuEoNJ6G2nYnPJX\nyKjSCDFrAgMBAAECggEAPsiDPTWRGwTbaDa0A8ipp1TpQK5Kmk1lUBByXWv1dMei\nSBVDcUFW5S3NFekUPZOukzONJ5mP/j4uTwAxsbhaGg5xqgXAhEfdPHs0K04j3Ogy\nGQc59oL8Jo6aVreQJgm52MVM5CiKUa2KcPScBpYHtAvttzoJBwTcKzOAL++C8UVR\nGjHcI9rd8CfEgMTFBb0dV5TMKJ+cvh0HKWaVnfAcGQn4WPe8dy1yw7sipcPESsPS\nLOpQ9qMZ+Mf9SKCcWiJPqjyIr5vV8OLjt8HpZ0Nfe/PNPst537+tjCF5Nx2lMt7X\nLhFL3gj/zqNU8I6j6aKMp3juk6Bw95iMB6mmcdNgAQKBgQDu0JLw5QtqS60pdS+w\n9D3O8yLkslHY6UuOI8TfPU97kS2S2xAD4bYmRXwG3ArEicLIPaZ5+xJWO9c1VYtk\nopmlh9OPcm/pFbdbvXGoHMAgWWWseRnu164Oc0qwjDF88G4C880Y8Gf/k79Hj7h4\n0e00tFhnHrQ2uU2MwAtj6ogJSwKBgQDHLvLp9hGG4DSSgC7+rSBl2EG5s6zd41id\n72BTJ9GtSrt/hUjSDODAUbvSNFpStIZ4rtuHshvc3Lgydfs4JegZF0N9eA6+DtEn\n0ewtg8sIKG5TUAr/tI+STzbPpY16qljEmjZc+RAH45TrhqVdE3Cfqzld5NkWupNs\nnoSBQdaEYQKBgQC0/vM/C/j42N4mm6BHlvT5UiDR/6w0n6wZ0FY3c3o4BrHpqYmb\nx4eLvgHgGQk4J8iuhrsTnAwruzLCQ1FgNjQI1saq42qZ11GegBgR96hNXDPI4geb\nk29hmFO1NquTK43VQv3gtuO7OjkwfWasez4yQbT2grjG+O4jjLGVSn1LvQKBgAFp\nA69EXrtluvmOjsae0yvlbBG0g/TON0Jm/3eXQJTJgqpUdz+Fd9Hkwj+qvzj2rj0M\nf+FmEWxu45731t9+5TXIRGIPB4uw7yopAlMQK8/S+XT9jBZjYODYTrsJoQbNTfOW\nY+wkl0h3BAbm3STbjmCTBcT0adUPXRvXw3hmzu4BAoGAd0u2LgjMHD5qV+l18bWq\nGggh5OKdFJp54rd1zBLhVMTCsh6Ml0DZ/n4+lviWxuhn1odHRyNCR/1KsxmAp5Y7\noUCaMYqFuzv4ZR1PYb/LsyidISWB0wtUI6UVcWLfKODgM+wgnnD5fl60OPtEnHav\neYPkxWGNNhGrRur4mXzsU0s=\n-----END PRIVATE KEY-----\n",
+  "client_email": "eventbot-logger@solid-skill-428219-s6.iam.gserviceaccount.com",
+  "client_id": "100334772228450782161",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/eventbot-logger%40solid-skill-428219-s6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

@@ -1,0 +1,6 @@
+python-telegram-bot==20.3
+requests
+python-dotenv
+gspread
+oauth2client
+nest_asyncio
