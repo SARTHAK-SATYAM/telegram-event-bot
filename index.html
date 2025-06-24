@@ -7,19 +7,19 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
   <style>
-    body {
-      background: url('https://images.unsplash.com/photo-1503424886300-4d2af7c2c4cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1400&q=80') no-repeat center center fixed;
+    .hero-bg {
+      background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)),
+        url('https://images.pexels.com/photos/169190/pexels-photo-169190.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260');
       background-size: cover;
-    }
-    .bg-overlay {
-      background-color: rgba(255, 255, 255, 0.8);
+      background-position: center;
+      background-repeat: no-repeat;
     }
   </style>
 </head>
-<body class="bg-overlay font-sans">
+<body class="font-sans">
 
   <!-- Hero Section -->
-  <section class="text-center py-24 px-4">
+  <section class="hero-bg text-center py-24 px-4">
     <h1 class="text-5xl font-extrabold text-gray-800 mb-4" data-aos="fade-down">Plan Events Instantly with AI 🎉</h1>
     <p class="mt-4 text-gray-700 text-xl max-w-2xl mx-auto" data-aos="fade-up">From birthdays to business meetings, get curated plans in seconds. Smart. Simple. Free.</p>
     <a href="https://t.me/enigma_event_bot" target="_blank" class="mt-6 inline-block bg-blue-600 text-white px-8 py-4 rounded-xl text-lg hover:bg-blue-700 transition" data-aos="zoom-in">Try it on Telegram</a>
@@ -63,7 +63,7 @@
     </div>
   </section>
 
-  <!-- Reviews Section -->
+  <!-- Reviews -->
   <section class="py-20 px-6 max-w-6xl mx-auto">
     <h2 class="text-4xl font-bold text-center text-gray-800 mb-12" data-aos="fade-up">What Users Say</h2>
     <div class="grid md:grid-cols-3 gap-10 text-center">
@@ -89,10 +89,7 @@
 
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <script>
-    AOS.init({
-      duration: 800,
-      offset: 200,
-    });
+    AOS.init({ duration: 800, offset: 200 });
   </script>
 </body>
 </html>
