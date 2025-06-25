@@ -169,21 +169,23 @@ async def main():
 # Safe event loop startup
 if __name__ == "__main__":
     import asyncio
+    import nest_asyncio
+    import sys
 
-    async def start_bot():
+    async def runner():
         try:
             await main()
         except Exception as e:
-            logger.error(f"🔥 Unhandled Exception in main: {e}")
+            logger.exception(f"🔥 Unhandled Exception in main: {e}")
 
-    # Safe for Render/Jupyter environments where loop is already running
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            import nest_asyncio
+            logger.warning("⚠️ Event loop already running. Applying nest_asyncio workaround.")
             nest_asyncio.apply()
-            loop.create_task(start_bot())
+            asyncio.create_task(runner())  # Safe in Render/Jupyter/etc.
         else:
-            loop.run_until_complete(start_bot())
+            loop.run_until_complete(runner())
     except Exception as e:
-        logger.critical(f"💥 Critical failure in bot startup: {e}")
+        logger.critical(f"💥 Critical bot failure: {e}")
+        sys.exit(1)
