@@ -10,14 +10,9 @@
   <style>
     body {
       font-family: 'Outfit', sans-serif;
-      background: linear-gradient(180deg, #0f0f0f, #1a1a1a, #111111);
-      background-size: 100% 300%;
-      animation: backgroundScroll 20s linear infinite;
+      background-color: #0f0f0f;
       color: white;
-    }
-    @keyframes backgroundScroll {
-      0% { background-position: 0% 0%; }
-      100% { background-position: 0% 100%; }
+      overflow-x: hidden;
     }
     .glass {
       backdrop-filter: blur(10px);
@@ -26,57 +21,69 @@
       border: 1px solid rgba(255, 255, 255, 0.1);
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .fade-in {
-      animation: fadeIn 1.8s ease-in forwards;
+    .hero-animated {
+      background: radial-gradient(circle, #1f1f1f, #0f0f0f);
+      animation: gradientShift 20s ease infinite;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-    .slide-up {
-      animation: slideUp 1.4s ease-out forwards;
+    .glow-text {
+      text-shadow: 0 0 10px #a855f7, 0 0 20px #a855f7, 0 0 30px #a855f7;
     }
-    @keyframes slideUp {
-      0% { transform: translateY(40px); opacity: 0; }
-      100% { transform: translateY(0); opacity: 1; }
+    .floating {
+      animation: float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0); }
+    }
+    .section-transition {
+      transition: background 1s ease;
     }
   </style>
 </head>
 <body>
   <!-- Hero Section -->
-  <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center glass fade-in">
-    <h1 class="text-5xl font-bold mb-4 slide-up">🎉 EventBot: Your AI Event Companion</h1>
-    <p class="text-xl max-w-2xl mb-6" data-aos="fade-up">Plan weddings, birthdays, and corporate events in minutes using smart automation. Save time, stress less.</p>
+  <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center hero-animated section-transition">
+    <h1 class="text-5xl font-bold mb-4 glow-text floating">🎉 EventBot: Plan Like a Pro</h1>
+    <p class="text-xl max-w-2xl mb-6" data-aos="fade-up">Let AI take the stress out of planning your wedding, party, or event. One command, endless results.</p>
     <a href="https://t.me/enigma_event_bot" target="_blank" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-full text-lg transition shadow-lg" data-aos="zoom-in-up">Start on Telegram</a>
   </section>
 
   <!-- Features -->
-  <section class="py-20 bg-gradient-to-br from-black via-gray-900 to-black">
+  <section class="py-24 bg-gradient-to-br from-zinc-900 via-black to-zinc-800 section-transition">
     <div class="text-center mb-12" data-aos="fade-up">
       <h2 class="text-3xl font-bold">✨ Features</h2>
     </div>
-    <div class="grid md:grid-cols-3 gap-8 px-6 max-w-6xl mx-auto">
-      <div class="glass p-6" data-aos="fade-right">
+    <div class="grid md:grid-cols-3 gap-10 px-6 max-w-6xl mx-auto">
+      <div class="glass p-6 transform hover:scale-105 transition-all duration-500" data-aos="fade-right">
         <h3 class="text-xl font-semibold text-yellow-300 mb-2">🎂 Birthday Planner</h3>
-        <p>AI-generated themes, party tips, invites and gift ideas tailored by age.</p>
+        <p>Generate age-appropriate party themes, invites, and gift suggestions in seconds.</p>
       </div>
-      <div class="glass p-6" data-aos="fade-up">
+      <div class="glass p-6 transform hover:scale-105 transition-all duration-500" data-aos="fade-up">
         <h3 class="text-xl font-semibold text-green-300 mb-2">💼 Business Events</h3>
-        <p>Professional and creative ideas for meetings, conferences, and launches.</p>
+        <p>Quick ideas for seminars, conferences, launch parties, and team-building events.</p>
       </div>
-      <div class="glass p-6" data-aos="fade-left">
+      <div class="glass p-6 transform hover:scale-105 transition-all duration-500" data-aos="fade-left">
         <h3 class="text-xl font-semibold text-pink-300 mb-2">💍 Wedding Guide</h3>
-        <p>AI-curated wedding plans with theme, schedule, and budget automation.</p>
+        <p>Theme suggestions, vendor plans, timelines, and even budgeting made effortless.</p>
       </div>
     </div>
   </section>
 
+  <!-- Animated Divider -->
+  <div class="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 animate-pulse"></div>
+
   <!-- Testimonials -->
-  <section class="py-20 bg-gradient-to-b from-gray-900 to-black">
+  <section class="py-24 bg-zinc-950 text-gray-200 section-transition">
     <div class="text-center mb-10" data-aos="fade-up">
       <h2 class="text-3xl font-bold">🗣️ What Users Say</h2>
     </div>
-    <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto px-4">
       <div class="glass p-6" data-aos="zoom-in-right">
         <p class="italic text-lg">"Planned my daughter’s party in 10 mins. It felt like magic!"</p>
         <div class="mt-2 font-semibold text-yellow-400">— Priya, Mumbai</div>
@@ -89,8 +96,8 @@
   </section>
 
   <!-- Footer -->
-  <footer class="text-center py-6 text-gray-400 text-sm bg-black bg-opacity-70">
-    © 2025 EventBot by Sarthak | Crafted with ❤️ using GPT + Telegram API
+  <footer class="text-center py-6 text-gray-400 text-sm bg-zinc-900">
+    © 2025 EventBot by Sarthak | Built with ❤️ using GPT + Telegram API
   </footer>
 
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
