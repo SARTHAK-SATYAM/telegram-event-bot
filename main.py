@@ -35,24 +35,32 @@ credentials = ServiceAccountCredentials.from_json_keyfile_name("creds.json", sco
 gc = gspread.authorize(credentials)
 sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
 
-# Hugging Face API Call
-async def query_huggingface(prompt):
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {"max_new_tokens": 150, "temperature": 0.7, "do_sample": True},
+import httpx
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+async def query_openrouter(prompt: str):
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "HTTP-Referer": "https://github.com/SARTHAK-SATYAM/telegram-event-bot",  # optional, for tracking
+        "Content-Type": "application/json"
     }
-    response = requests.post(
-        "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
-        headers=headers,
-        json=payload,
-    )
-    result = response.json()
-    if isinstance(result, list):
-        return result[0]["generated_text"].strip()
-    elif "error" in result:
-        return "⚠️ AI service is down. Try again soon."
-    return "🤖 Unexpected error occurred."
+
+    data = {
+        "model": "mistralai/mixtral-8x7b",
+        "messages": [
+            {"role": "system", "content": "You are a creative yet concise event planner. Provide well-structured, bullet-point suggestions under 100 words."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
+
+    if response.status_code == 200:
+        return response.json()['choices'][0]['message']['content'].strip()
+    else:
+        return "⚠️ AI service failed to respond. Please try again later."
 
 # Format Output as Bullet Points
 def format_response(raw_text, prompt):
@@ -127,7 +135,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.chat.send_action(action="typing")
 
     prompt = f"Suggest a {event_type} event plan in bullet points. Limit to 100 words. Input: {user_query}"
-    result = await query_huggingface(prompt)
+    result = await query_openrouter(prompt)
     formatted_points = format_response(result, prompt)
 
     await update.message.reply_text(f"📅 Here's your *{event_type.title()} Event Plan*:", parse_mode='Markdown')
