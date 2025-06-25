@@ -9,11 +9,15 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/motion-ui@2.0.3/dist/motion-ui.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    html {
+      scroll-behavior: smooth;
+    }
     body {
       font-family: 'Outfit', sans-serif;
       background: radial-gradient(circle at top left, #1e1e1e, #0d0d0d);
       color: white;
       overflow-x: hidden;
+      cursor: url('https://cdn.jsdelivr.net/gh/irfan-maulana-design/cursor-pack/custom-pointer.svg'), auto;
     }
     .glass {
       backdrop-filter: blur(16px);
@@ -21,6 +25,11 @@
       border-radius: 1rem;
       border: 1px solid rgba(255, 255, 255, 0.08);
       box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      transition: transform 0.4s ease, box-shadow 0.4s ease;
+    }
+    .glass:hover {
+      transform: translateY(-6px) scale(1.03);
+      box-shadow: 0 20px 50px rgba(147, 51, 234, 0.3);
     }
     .glow-text {
       text-shadow: 0 0 15px #9333ea, 0 0 30px #9333ea;
@@ -36,64 +45,124 @@
       transform: scale(1.08);
       box-shadow: 0 0 25px #a855f7;
     }
+    .scroll-animate {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 1s ease-out;
+    }
+    .scroll-animate.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    #particles-js {
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+    @media (max-width: 768px) {
+      h1.text-6xl {
+        font-size: 2.5rem;
+      }
+      p.text-2xl {
+        font-size: 1.25rem;
+      }
+      .glass {
+        padding: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <!-- Hero Section -->
+  <div id="particles-js"></div>
   <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center motion-ui animate-enter fade-in">
     <h1 class="text-6xl font-bold mb-6 glow-text floating">🎊 EventBot</h1>
     <p class="text-2xl max-w-3xl mb-8">Plan birthdays, weddings, and business events instantly using AI. It's smart, fast, and delightful.</p>
     <a href="https://t.me/enigma_event_bot" target="_blank" class="bg-purple-600 hover:bg-purple-700 animated-button px-8 py-4 rounded-full text-lg transition shadow-xl motion-ui animate-enter slide-in-up">Start Planning</a>
   </section>
-
-  <!-- Features Section -->
-  <section class="py-24 bg-gradient-to-tr from-black via-zinc-900 to-black motion-ui animate-enter zoom-in">
-    <div class="text-center mb-16">
+  <section class="py-24 bg-gradient-to-tr from-black via-zinc-900 to-black">
+    <div class="text-center mb-16 scroll-animate">
       <h2 class="text-4xl font-bold mb-4">🚀 Why Choose EventBot?</h2>
       <p class="text-gray-400 text-lg">Instant planning, AI-curated themes, and user-first automation</p>
     </div>
     <div class="grid md:grid-cols-3 gap-12 px-8 max-w-7xl mx-auto">
-      <div class="glass p-6 motion-ui animate-enter slide-in-left">
+      <div class="glass p-6 scroll-animate">
         <h3 class="text-xl font-semibold text-yellow-300 mb-3">🎂 Birthday Magic</h3>
         <p>AI-powered party themes, budget tips, invite ideas, and more for every age group.</p>
       </div>
-      <div class="glass p-6 motion-ui animate-enter fade-in">
+      <div class="glass p-6 scroll-animate">
         <h3 class="text-xl font-semibold text-green-300 mb-3">💼 Professional Edge</h3>
         <p>Plan impactful corporate events, product launches, and off-sites in minutes.</p>
       </div>
-      <div class="glass p-6 motion-ui animate-enter slide-in-right">
+      <div class="glass p-6 scroll-animate">
         <h3 class="text-xl font-semibold text-pink-300 mb-3">💍 Wedding Vibes</h3>
         <p>Get timeline plans, decor ideas, theme suggestions and vendor management advice.</p>
       </div>
     </div>
   </section>
-
-  <!-- Testimonials -->
   <section class="py-24 bg-zinc-950">
-    <div class="text-center mb-12">
+    <div class="text-center mb-12 scroll-animate">
       <h2 class="text-3xl font-bold">🌟 What Our Users Say</h2>
     </div>
     <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto px-6">
-      <div class="glass p-6 motion-ui animate-enter slide-in-left">
+      <div class="glass p-6 scroll-animate">
         <p class="italic text-lg">"Planned my daughter’s birthday party using EventBot in 10 mins. Total game changer!"</p>
         <div class="mt-4 font-semibold text-yellow-400">— Priya M., Mumbai</div>
       </div>
-      <div class="glass p-6 motion-ui animate-enter slide-in-right">
+      <div class="glass p-6 scroll-animate">
         <p class="italic text-lg">"We used it for our product launch planning. It saved us days of effort!"</p>
         <div class="mt-4 font-semibold text-green-400">— Rohan S., Bengaluru</div>
       </div>
     </div>
   </section>
-
-  <!-- Footer -->
   <footer class="text-center py-8 text-gray-400 text-sm bg-black border-t border-zinc-800">
     Built with ❤️ by Sarthak | Powered by GPT + Telegram API | © 2025 EventBot
   </footer>
-
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/motion-ui@2.0.3/dist/motion-ui.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script>
     AOS.init({ duration: 1200, once: true });
+    const scrollElements = document.querySelectorAll('.scroll-animate');
+    const scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+    scrollElements.forEach(el => scrollObserver.observe(el));
+    particlesJS("particles-js", {
+      particles: {
+        number: { value: 80 },
+        size: { value: 2 },
+        color: { value: "#9333ea" },
+        line_linked: {
+          enable: true,
+          distance: 150,
+          color: "#9333ea",
+          opacity: 0.4,
+          width: 1
+        },
+        move: {
+          enable: true,
+          speed: 1.2
+        }
+      },
+      interactivity: {
+        detect_on: "canvas",
+        events: {
+          onhover: { enable: true, mode: "grab" },
+          onclick: { enable: true, mode: "push" }
+        },
+        modes: {
+          grab: { distance: 140, line_linked: { opacity: 1 } },
+          push: { particles_nb: 4 }
+        }
+      }
+    });
   </script>
 </body>
 </html>
