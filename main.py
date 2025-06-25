@@ -1,10 +1,6 @@
-import logging
-import asyncio
 import os
-import json
+import logging
 import requests
-import datetime
-import time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -12,169 +8,162 @@ from telegram.ext import (
     CallbackQueryHandler,
     MessageHandler,
     ContextTypes,
+    ConversationHandler,
     filters,
 )
-from dotenv import load_dotenv
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 import nest_asyncio
+import asyncio
 
-nest_asyncio.apply()
-load_dotenv()
-
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-HF_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
-GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")
-
+# Enable logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Google Sheets Setup
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
-gc = gspread.authorize(credentials)
-sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
-
-import httpx
-
+# Get environment variables
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
-async def query_openrouter(prompt: str):
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "HTTP-Referer": "https://github.com/SARTHAK-SATYAM/telegram-event-bot",  # optional, for tracking
-        "Content-Type": "application/json"
-    }
+# Stages
+EVENT_TYPE, DESCRIPTION, FOLLOWUP = range(3)
 
-    data = {
-        "model": "mistralai/mixtral-8x7b",
-        "messages": [
-            {"role": "system", "content": "You are a creative yet concise event planner. Provide well-structured, bullet-point suggestions under 100 words."},
-            {"role": "user", "content": prompt}
-        ]
-    }
-
-    async with httpx.AsyncClient() as client:
-        response = await client.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=data)
-
-    if response.status_code == 200:
-        return response.json()['choices'][0]['message']['content'].strip()
-    else:
-        return "⚠️ AI service failed to respond. Please try again later."
-
-# Format Output as Bullet Points
-def format_response(raw_text, prompt):
-    raw_text = raw_text.replace(prompt, "").strip()
-    lines = raw_text.replace('\n', ' ').split('. ')
-    bullet_points = []
-    emojis = ["🎯", "📌", "✨", "💡", "🎉", "📝", "📍"]
-    for i, line in enumerate(lines):
-        line = line.strip().strip('.')
-        if line and len(line) < 200:
-            emoji = emojis[i % len(emojis)]
-            bullet_points.append(f"{emoji} {line}.")
-        if len(bullet_points) == 5:
-            break
-    return bullet_points
-
-# Follow-up Question Suggestions
-def get_follow_up_questions(event_type):
-    follow_ups = {
-        "birthday": [
-            "🎁 Suggestions for return gifts?",
-            "📍 Venue recommendations in your area?"
-        ],
-        "business": [
-            "📅 Help with scheduling or logistics?",
-            "🍽️ Catering options?"
-        ],
-        "wedding": [
-            "💒 Themes or dress suggestions?",
-            "🎶 Music and entertainment planning?"
-        ]
-    }
-    return follow_ups.get(event_type, [])
-
-# /start command
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Start command
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [
         [InlineKeyboardButton("🎂 Birthday", callback_data='birthday')],
         [InlineKeyboardButton("💼 Business", callback_data='business')],
-        [InlineKeyboardButton("💍 Wedding", callback_data='wedding')]
+        [InlineKeyboardButton("💍 Wedding", callback_data='wedding')],
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text("Hi! What type of event are you planning?", reply_markup=reply_markup)
-
-# /help command
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    help_text = (
-        "🆘 *How to Use EventBot*\n\n"
-        "1. Type /start to select an event category.\n"
-        "2. Describe the event (e.g., 'Jungle theme birthday for 10-year-old in Mumbai').\n"
-        "3. Get AI-curated suggestions in bullet points.\n"
-        "4. Tap follow-up questions to refine your plan.\n\n"
-        "Need more support? Just ask!"
+    await update.message.reply_text(
+        "👋 Hi! What type of event are you planning?",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
-    await update.message.reply_text(help_text, parse_mode='Markdown')
+    return EVENT_TYPE
 
-# Event selection button callback
-async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Help command
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "ℹ️ I’m EventBot! Here’s what I can help with:\n"
+        "/start – Begin planning your event\n"
+        "/help – Show help info\n"
+        "/exit – Exit the conversation"
+    )
+
+# Exit command
+async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("👋 Thank you for using EventBot. Have a great day!")
+    return ConversationHandler.END
+
+# Handle event type selection
+async def handle_event_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    context.user_data['event_type'] = query.data
-    await query.message.reply_text(f"🎯 Great! Now send me a short description of your {query.data} event.")
+    event_type = query.data
+    context.user_data["event_type"] = event_type
+    await query.edit_message_text(f"🎯 Great! Now send me a short description of your {event_type} event.")
+    return DESCRIPTION
 
-# Handle text messages
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    event_type = context.user_data.get('event_type')
-    if not event_type:
-        await update.message.reply_text("Please choose an event type first using /start.")
-        return
-
-    user_query = update.message.text
-    await update.message.chat.send_action(action="typing")
-
-    prompt = f"Suggest a {event_type} event plan in bullet points. Limit to 100 words. Input: {user_query}"
-    result = await query_openrouter(prompt)
-    formatted_points = format_response(result, prompt)
-
-    await update.message.reply_text(f"📅 Here's your *{event_type.title()} Event Plan*:", parse_mode='Markdown')
-    for point in formatted_points:
-        await asyncio.sleep(1.1)
-        await update.message.reply_text(point)
-
-    # Send follow-up
-    follow_ups = get_follow_up_questions(event_type)
-    if follow_ups:
-        await asyncio.sleep(1)
-        await update.message.reply_text("Would you like help with anything else?", reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton(text=question, callback_data=f"followup:{question}")]
-            for question in follow_ups
-        ]))
-
-    # Log interaction
+# AI Response via OpenRouter
+async def generate_ai_response(description: str, event_type: str) -> str:
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "openrouter/auto",  # Use best fit model
+        "messages": [
+            {
+                "role": "system",
+                "content": f"You are an expert event planner. Help users plan a {event_type} event."
+            },
+            {
+                "role": "user",
+                "content": description
+            }
+        ]
+    }
     try:
-        sheet.append_row([
-            update.effective_user.username,
-            event_type,
-            user_query,
-            result,
-            str(datetime.datetime.now())
-        ])
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=30,
+        )
+        data = response.json()
+        return data["choices"][0]["message"]["content"]
     except Exception as e:
-        logger.warning(f"[Sheets] Logging failed: {e}")
+        logger.error(f"AI Error: {e}")
+        return "⚠️ Sorry, I couldn't generate a response at the moment."
 
-# Main async application
+# Handle event description
+async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    description = update.message.text
+    event_type = context.user_data.get("event_type", "event")
+
+    response = await generate_ai_response(description, event_type)
+
+    await update.message.reply_text(f"📅 Here's your *{event_type.capitalize()} Event Plan*:", parse_mode="Markdown")
+    await update.message.reply_text(response, parse_mode="Markdown")
+
+    keyboard = [
+        [InlineKeyboardButton("👗 Themes or dress suggestions?", callback_data="theme")],
+        [InlineKeyboardButton("🎶 Music and entertainment planning?", callback_data="entertainment")],
+        [InlineKeyboardButton("❌ Exit", callback_data="exit")],
+    ]
+    await update.message.reply_text(
+        "Would you like help with anything else?",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    return FOLLOWUP
+
+# Handle follow-up interactions
+async def handle_followup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    query = update.callback_query
+    await query.answer()
+    context.user_data["followup"] = query.data
+
+    if query.data == "exit":
+        await query.edit_message_text("👋 Thank you for using EventBot. Have a great day!")
+        return ConversationHandler.END
+
+    await query.edit_message_text(f"🎯 Great! Now send me a short description of your followup: {query.data} event.")
+    return DESCRIPTION
+
+# Handle unknown text
+async def unknown_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("❓ I didn’t understand that. Please use /start to begin or /help for assistance.")
+
+# Delete any previous webhook to avoid polling conflict
+def clear_webhook():
+    try:
+        requests.get(f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook")
+    except Exception as e:
+        logger.warning("Webhook cleanup failed: %s", e)
+
+# Main application
 async def main():
+    clear_webhook()
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CallbackQueryHandler(button_callback))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("start", start)],
+        states={
+            EVENT_TYPE: [CallbackQueryHandler(handle_event_type)],
+            DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_description)],
+            FOLLOWUP: [CallbackQueryHandler(handle_followup)],
+        },
+        fallbacks=[
+            CommandHandler("help", help_command),
+            CommandHandler("exit", exit_command),
+        ],
+    )
 
-    print("🤖 Bot is live and polling...")
+    app.add_handler(conv_handler)
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("exit", exit_command))
+    app.add_handler(MessageHandler(filters.COMMAND, unknown_message))
+
     await app.run_polling()
 
-if __name__ == '__main__':
-    asyncio.run(main())
+if __name__ == "__main__":
+    nest_asyncio.apply()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
