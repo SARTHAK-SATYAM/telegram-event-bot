@@ -6,107 +6,94 @@
   <title>EventBot - AI Event Planner</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/motion-ui@2.0.3/dist/motion-ui.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Outfit', sans-serif;
-      background-color: #0f0f0f;
+      background: radial-gradient(circle at top left, #1e1e1e, #0d0d0d);
       color: white;
       overflow-x: hidden;
     }
     .glass {
-      backdrop-filter: blur(10px);
-      background-color: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      background-color: rgba(255, 255, 255, 0.05);
       border-radius: 1rem;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    .hero-animated {
-      background: radial-gradient(circle, #1f1f1f, #0f0f0f);
-      animation: gradientShift 20s ease infinite;
-    }
-    @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
     }
     .glow-text {
-      text-shadow: 0 0 10px #a855f7, 0 0 20px #a855f7, 0 0 30px #a855f7;
+      text-shadow: 0 0 15px #9333ea, 0 0 30px #9333ea;
     }
     .floating {
       animation: float 4s ease-in-out infinite;
     }
     @keyframes float {
-      0% { transform: translateY(0); }
+      0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-10px); }
-      100% { transform: translateY(0); }
     }
-    .section-transition {
-      transition: background 1s ease;
+    .animated-button:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 25px #a855f7;
     }
   </style>
 </head>
 <body>
   <!-- Hero Section -->
-  <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center hero-animated section-transition">
-    <h1 class="text-5xl font-bold mb-4 glow-text floating">🎉 EventBot: Plan Like a Pro</h1>
-    <p class="text-xl max-w-2xl mb-6" data-aos="fade-up">Let AI take the stress out of planning your wedding, party, or event. One command, endless results.</p>
-    <a href="https://t.me/enigma_event_bot" target="_blank" class="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-full text-lg transition shadow-lg" data-aos="zoom-in-up">Start on Telegram</a>
+  <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center motion-ui animate-enter fade-in">
+    <h1 class="text-6xl font-bold mb-6 glow-text floating">🎊 EventBot</h1>
+    <p class="text-2xl max-w-3xl mb-8">Plan birthdays, weddings, and business events instantly using AI. It's smart, fast, and delightful.</p>
+    <a href="https://t.me/enigma_event_bot" target="_blank" class="bg-purple-600 hover:bg-purple-700 animated-button px-8 py-4 rounded-full text-lg transition shadow-xl motion-ui animate-enter slide-in-up">Start Planning</a>
   </section>
 
-  <!-- Features -->
-  <section class="py-24 bg-gradient-to-br from-zinc-900 via-black to-zinc-800 section-transition">
-    <div class="text-center mb-12" data-aos="fade-up">
-      <h2 class="text-3xl font-bold">✨ Features</h2>
+  <!-- Features Section -->
+  <section class="py-24 bg-gradient-to-tr from-black via-zinc-900 to-black motion-ui animate-enter zoom-in">
+    <div class="text-center mb-16">
+      <h2 class="text-4xl font-bold mb-4">🚀 Why Choose EventBot?</h2>
+      <p class="text-gray-400 text-lg">Instant planning, AI-curated themes, and user-first automation</p>
     </div>
-    <div class="grid md:grid-cols-3 gap-10 px-6 max-w-6xl mx-auto">
-      <div class="glass p-6 transform hover:scale-105 transition-all duration-500" data-aos="fade-right">
-        <h3 class="text-xl font-semibold text-yellow-300 mb-2">🎂 Birthday Planner</h3>
-        <p>Generate age-appropriate party themes, invites, and gift suggestions in seconds.</p>
+    <div class="grid md:grid-cols-3 gap-12 px-8 max-w-7xl mx-auto">
+      <div class="glass p-6 motion-ui animate-enter slide-in-left">
+        <h3 class="text-xl font-semibold text-yellow-300 mb-3">🎂 Birthday Magic</h3>
+        <p>AI-powered party themes, budget tips, invite ideas, and more for every age group.</p>
       </div>
-      <div class="glass p-6 transform hover:scale-105 transition-all duration-500" data-aos="fade-up">
-        <h3 class="text-xl font-semibold text-green-300 mb-2">💼 Business Events</h3>
-        <p>Quick ideas for seminars, conferences, launch parties, and team-building events.</p>
+      <div class="glass p-6 motion-ui animate-enter fade-in">
+        <h3 class="text-xl font-semibold text-green-300 mb-3">💼 Professional Edge</h3>
+        <p>Plan impactful corporate events, product launches, and off-sites in minutes.</p>
       </div>
-      <div class="glass p-6 transform hover:scale-105 transition-all duration-500" data-aos="fade-left">
-        <h3 class="text-xl font-semibold text-pink-300 mb-2">💍 Wedding Guide</h3>
-        <p>Theme suggestions, vendor plans, timelines, and even budgeting made effortless.</p>
+      <div class="glass p-6 motion-ui animate-enter slide-in-right">
+        <h3 class="text-xl font-semibold text-pink-300 mb-3">💍 Wedding Vibes</h3>
+        <p>Get timeline plans, decor ideas, theme suggestions and vendor management advice.</p>
       </div>
     </div>
   </section>
-
-  <!-- Animated Divider -->
-  <div class="h-2 bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-500 animate-pulse"></div>
 
   <!-- Testimonials -->
-  <section class="py-24 bg-zinc-950 text-gray-200 section-transition">
-    <div class="text-center mb-10" data-aos="fade-up">
-      <h2 class="text-3xl font-bold">🗣️ What Users Say</h2>
+  <section class="py-24 bg-zinc-950">
+    <div class="text-center mb-12">
+      <h2 class="text-3xl font-bold">🌟 What Our Users Say</h2>
     </div>
-    <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto px-4">
-      <div class="glass p-6" data-aos="zoom-in-right">
-        <p class="italic text-lg">"Planned my daughter’s party in 10 mins. It felt like magic!"</p>
-        <div class="mt-2 font-semibold text-yellow-400">— Priya, Mumbai</div>
+    <div class="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto px-6">
+      <div class="glass p-6 motion-ui animate-enter slide-in-left">
+        <p class="italic text-lg">"Planned my daughter’s birthday party using EventBot in 10 mins. Total game changer!"</p>
+        <div class="mt-4 font-semibold text-yellow-400">— Priya M., Mumbai</div>
       </div>
-      <div class="glass p-6" data-aos="zoom-in-left">
-        <p class="italic text-lg">"This bot saved me so much time while preparing our product demo day."</p>
-        <div class="mt-2 font-semibold text-green-400">— Rohan, Bengaluru</div>
+      <div class="glass p-6 motion-ui animate-enter slide-in-right">
+        <p class="italic text-lg">"We used it for our product launch planning. It saved us days of effort!"</p>
+        <div class="mt-4 font-semibold text-green-400">— Rohan S., Bengaluru</div>
       </div>
     </div>
   </section>
 
   <!-- Footer -->
-  <footer class="text-center py-6 text-gray-400 text-sm bg-zinc-900">
-    © 2025 EventBot by Sarthak | Built with ❤️ using GPT + Telegram API
+  <footer class="text-center py-8 text-gray-400 text-sm bg-black border-t border-zinc-800">
+    Built with ❤️ by Sarthak | Powered by GPT + Telegram API | © 2025 EventBot
   </footer>
 
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/motion-ui@2.0.3/dist/motion-ui.min.js"></script>
   <script>
-    AOS.init({
-      duration: 1200,
-      once: true,
-      mirror: true,
-    });
+    AOS.init({ duration: 1200, once: true });
   </script>
 </body>
 </html>
