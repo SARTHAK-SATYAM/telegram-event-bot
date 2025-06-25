@@ -169,18 +169,21 @@ async def main():
 # Safe event loop startup
 if __name__ == "__main__":
     import asyncio
-    import sys
 
-    try:
+    async def start_bot():
         try:
-            loop = asyncio.get_running_loop()
-            # If already running (Render/Jupyter), use create_task
-            loop.create_task(main())
-        except RuntimeError:
-            # If not running, safe to run normally
-            asyncio.run(main())
-    except (KeyboardInterrupt, SystemExit):
-        print("🛑 Bot stopped cleanly.")
+            await main()
+        except Exception as e:
+            logger.error(f"🔥 Unhandled Exception in main: {e}")
+
+    # Safe for Render/Jupyter environments where loop is already running
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            import nest_asyncio
+            nest_asyncio.apply()
+            loop.create_task(start_bot())
+        else:
+            loop.run_until_complete(start_bot())
     except Exception as e:
-        print(f"🔥 Unhandled Exception: {e}")
-        sys.exit(1)
+        logger.critical(f"💥 Critical failure in bot startup: {e}")
