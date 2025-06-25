@@ -6,60 +6,57 @@ import requests
 import datetime
 import time
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
 from dotenv import load_dotenv
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import nest_asyncio
 
 nest_asyncio.apply()
-
-# Load environment variables
 load_dotenv()
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 HF_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN")
 GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME")
 
-# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Google Sheets Setup
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
+credentials = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
 gc = gspread.authorize(credentials)
 sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
 
-# Hugging Face Inference API
+# Hugging Face API Call
 async def query_huggingface(prompt):
     headers = {"Authorization": f"Bearer {HF_TOKEN}"}
     payload = {
         "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 150,
-            "temperature": 0.75,
-            "do_sample": True
-        }
+        "parameters": {"max_new_tokens": 150, "temperature": 0.7, "do_sample": True},
     }
-    try:
-        response = requests.post(
-            "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
-            headers=headers,
-            json=payload
-        )
-        result = response.json()
-        if isinstance(result, list):
-            return result[0]['generated_text'].strip()
-        elif "error" in result:
-            return "⚠️ AI service is temporarily down. Try again shortly."
-    except Exception as e:
-        return f"❌ Failed to reach AI API: {str(e)}"
-    return "🤖 Unexpected error."
+    response = requests.post(
+        "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
+        headers=headers,
+        json=payload,
+    )
+    result = response.json()
+    if isinstance(result, list):
+        return result[0]["generated_text"].strip()
+    elif "error" in result:
+        return "⚠️ AI service is down. Try again soon."
+    return "🤖 Unexpected error occurred."
 
-# Format response to bullet points
+# Format Output as Bullet Points
 def format_response(raw_text, prompt):
-    raw_text = raw_text.replace(prompt, '').strip()
+    raw_text = raw_text.replace(prompt, "").strip()
     lines = raw_text.replace('\n', ' ').split('. ')
     bullet_points = []
     emojis = ["🎯", "📌", "✨", "💡", "🎉", "📝", "📍"]
@@ -72,87 +69,104 @@ def format_response(raw_text, prompt):
             break
     return bullet_points
 
-# Follow-up suggestions
+# Follow-up Question Suggestions
 def get_follow_up_questions(event_type):
-    options = {
-        "birthday": ["🎁 Return gift ideas?", "📍 Nearby birthday venues?"],
-        "business": ["📅 Schedule planning?", "🍽️ Catering suggestions?"],
-        "wedding": ["💒 Theme/outfit help?", "🎶 Music options?"]
+    follow_ups = {
+        "birthday": [
+            "🎁 Suggestions for return gifts?",
+            "📍 Venue recommendations in your area?"
+        ],
+        "business": [
+            "📅 Help with scheduling or logistics?",
+            "🍽️ Catering options?"
+        ],
+        "wedding": [
+            "💒 Themes or dress suggestions?",
+            "🎶 Music and entertainment planning?"
+        ]
     }
-    return options.get(event_type, [])
+    return follow_ups.get(event_type, [])
 
-# Start command
+# /start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🎂 Birthday", callback_data='birthday')],
         [InlineKeyboardButton("💼 Business", callback_data='business')],
         [InlineKeyboardButton("💍 Wedding", callback_data='wedding')]
     ]
-    await update.message.reply_text("Hi! What type of event are you planning?", reply_markup=InlineKeyboardMarkup(keyboard))
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("Hi! What type of event are you planning?", reply_markup=reply_markup)
 
-# Handle event selection
+# /help command
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    help_text = (
+        "🆘 *How to Use EventBot*\n\n"
+        "1. Type /start to select an event category.\n"
+        "2. Describe the event (e.g., 'Jungle theme birthday for 10-year-old in Mumbai').\n"
+        "3. Get AI-curated suggestions in bullet points.\n"
+        "4. Tap follow-up questions to refine your plan.\n\n"
+        "Need more support? Just ask!"
+    )
+    await update.message.reply_text(help_text, parse_mode='Markdown')
+
+# Event selection button callback
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     context.user_data['event_type'] = query.data
-    await query.message.reply_text(f"Awesome! Now tell me more about your {query.data} event idea.")
+    await query.message.reply_text(f"🎯 Great! Now send me a short description of your {query.data} event.")
 
-# Handle messages and AI processing
+# Handle text messages
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     event_type = context.user_data.get('event_type')
     if not event_type:
-        await update.message.reply_text("Please choose an event type using /start.")
+        await update.message.reply_text("Please choose an event type first using /start.")
         return
 
     user_query = update.message.text
     await update.message.chat.send_action(action="typing")
 
-    prompt = f"📅 Here's your {event_type} event plan:\n• Suggest a {event_type} plan in bullet points.\n• Limit to 100 words.\n• Input: {user_query}"
-    ai_response = await query_huggingface(prompt)
-    points = format_response(ai_response, prompt)
+    prompt = f"Suggest a {event_type} event plan in bullet points. Limit to 100 words. Input: {user_query}"
+    result = await query_huggingface(prompt)
+    formatted_points = format_response(result, prompt)
 
-    await update.message.reply_text(f"📋 *Here’s a quick plan for your {event_type.title()}!*", parse_mode='Markdown')
-    for point in points:
-        await asyncio.sleep(1)
+    await update.message.reply_text(f"📅 Here's your *{event_type.title()} Event Plan*:", parse_mode='Markdown')
+    for point in formatted_points:
+        await asyncio.sleep(1.1)
         await update.message.reply_text(point)
 
-    followups = get_follow_up_questions(event_type)
-    if followups:
+    # Send follow-up
+    follow_ups = get_follow_up_questions(event_type)
+    if follow_ups:
         await asyncio.sleep(1)
-        await update.message.reply_text("Need more help?", reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton(text=q, callback_data=f"followup:{q}")] for q in followups]
-        ))
+        await update.message.reply_text("Would you like help with anything else?", reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton(text=question, callback_data=f"followup:{question}")]
+            for question in follow_ups
+        ]))
 
-    # Log to Google Sheets
+    # Log interaction
     try:
         sheet.append_row([
             update.effective_user.username,
             event_type,
             user_query,
-            ai_response,
+            result,
             str(datetime.datetime.now())
         ])
     except Exception as e:
-        logger.warning(f"Failed to log to Google Sheets: {e}")
+        logger.warning(f"[Sheets] Logging failed: {e}")
 
-# Main loop
+# Main async application
 async def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CallbackQueryHandler(button_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("🤖 Bot is live...")
+    print("🤖 Bot is live and polling...")
     await app.run_polling()
 
-import nest_asyncio
-nest_asyncio.apply()
-
-import asyncio
-
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-
-
+    asyncio.run(main())
