@@ -172,15 +172,15 @@ if __name__ == "__main__":
     import sys
 
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # Workaround for already running loop in environments like Jupyter/Render
-            task = loop.create_task(main())
-        else:
-            loop.run_until_complete(main())
+        try:
+            loop = asyncio.get_running_loop()
+            # If already running (Render/Jupyter), use create_task
+            loop.create_task(main())
+        except RuntimeError:
+            # If not running, safe to run normally
+            asyncio.run(main())
     except (KeyboardInterrupt, SystemExit):
         print("🛑 Bot stopped cleanly.")
-    except RuntimeError as e:
-        print(f"RuntimeError: {e}")
+    except Exception as e:
+        print(f"🔥 Unhandled Exception: {e}")
         sys.exit(1)
-
