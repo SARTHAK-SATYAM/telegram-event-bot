@@ -157,6 +157,7 @@ async def main():
             CommandHandler("help", help_command),
             CommandHandler("exit", exit_command),
         ],
+        per_message=False  # ✅ Safe option allowing mixed handlers
     )
 
     app.add_handler(conv_handler)
@@ -167,49 +168,14 @@ async def main():
     await app.run_polling()
 
 # Safe event loop startup
-import asyncio
-import logging
-import os
-from telegram.ext import ApplicationBuilder
-
-# ... all your imports and handlers stay same above this ...
-
-async def main():
-    await clear_webhook()
-    
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        states={
-            EVENT_TYPE: [CallbackQueryHandler(handle_event_type)],
-            DESCRIPTION: [MessageHandler(filters.TEXT & ~filters.COMMAND, handle_description)],
-            FOLLOWUP: [CallbackQueryHandler(handle_followup)],
-        },
-        fallbacks=[
-            CommandHandler("help", help_command),
-            CommandHandler("exit", exit_command),
-        ],
-        per_message=True
-    )
-
-    app.add_handler(conv_handler)
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("exit", exit_command))
-    app.add_handler(MessageHandler(filters.COMMAND, unknown_message))
-
-    # 🚀 This is the key: stop_signals=None avoids Render/Notebook issues
-    await app.run_polling(stop_signals=None)
-
-
-# ✅ Only use asyncio.run if you're certain no loop is running
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except RuntimeError as e:
-        logging.error("🔥 RuntimeError: Event loop already running. Skipping loop close.")
-        import nest_asyncio
-        nest_asyncio.apply()
-        loop = asyncio.get_event_loop()
-        loop.create_task(main())
+    import nest_asyncio
+    import asyncio
 
+    try:
+        nest_asyncio.apply()
+        asyncio.get_event_loop().run_until_complete(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("🛑 Bot stopped cleanly.")
+    except RuntimeError as e:
+        logging.exception(f"🔥 Runtime error: {e}")
