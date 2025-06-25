@@ -1,9 +1,6 @@
 import os
 import logging
-import base64
-import json
 import requests
-from datetime import datetime
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -14,41 +11,17 @@ from telegram.ext import (
     ConversationHandler,
     filters,
 )
-import nest_asyncio
-import asyncio
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 
 # Enable logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Environment variables
+# Get environment variables
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-GOOGLE_SHEETS_CREDS = os.getenv("GOOGLE_SHEETS_CREDS")  # base64 encoded
-GOOGLE_SHEET_NAME = os.getenv("GOOGLE_SHEET_NAME", "EventBotLog")
 
-# Constants
-MODEL = "openrouter/mistralai/mixtral-8x7b"
+# Stages
 EVENT_TYPE, DESCRIPTION, FOLLOWUP = range(3)
-
-# Google Sheets Setup
-def init_google_sheets():
-    creds_json = json.loads(base64.b64decode(GOOGLE_SHEETS_CREDS).decode("utf-8"))
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_json, scope)
-    client = gspread.authorize(creds)
-    sheet = client.open(GOOGLE_SHEET_NAME).sheet1
-    return sheet
-
-# Log to Google Sheets
-def log_to_sheets(user_id, event_type, description, timestamp):
-    try:
-        sheet = init_google_sheets()
-        sheet.append_row([str(user_id), event_type, description, timestamp])
-    except Exception as e:
-        logger.error(f"Logging to Sheets failed: {e}")
 
 # Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -77,7 +50,7 @@ async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("👋 Thank you for using EventBot. Have a great day!")
     return ConversationHandler.END
 
-# Event type selection
+# Handle event type selection
 async def handle_event_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
@@ -86,25 +59,25 @@ async def handle_event_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await query.edit_message_text(f"🎯 Great! Now send me a short description of your {event_type} event.")
     return DESCRIPTION
 
-# AI response
+# AI Response via OpenRouter
 async def generate_ai_response(description: str, event_type: str) -> str:
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
     }
-    prompt = (
-        f"You are a creative event planner. Plan a {event_type} with the following description:\n\n"
-        f"{description}\n\n"
-        "Respond clearly with structured suggestions, bullet points, and friendly tone. Use emojis where helpful."
-    )
     payload = {
-        "model": MODEL,
+        "model": "openrouter/auto",
         "messages": [
-            {"role": "system", "content": "You are a professional AI assistant that helps plan events with helpful, creative suggestions."},
-            {"role": "user", "content": prompt}
+            {
+                "role": "system",
+                "content": f"You are an expert event planner. Help users plan a {event_type} event."
+            },
+            {
+                "role": "user",
+                "content": description
+            }
         ]
     }
-
     try:
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
@@ -118,62 +91,59 @@ async def generate_ai_response(description: str, event_type: str) -> str:
         logger.error(f"AI Error: {e}")
         return "⚠️ Sorry, I couldn't generate a response at the moment."
 
-# Handle description + log + suggest next
+# Handle event description
 async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     description = update.message.text
     event_type = context.user_data.get("event_type", "event")
-    user_id = update.message.from_user.id
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    # AI + Google Sheets
     response = await generate_ai_response(description, event_type)
-    log_to_sheets(user_id, event_type, description, timestamp)
 
     await update.message.reply_text(f"📅 Here's your *{event_type.capitalize()} Event Plan*:", parse_mode="Markdown")
     await update.message.reply_text(response, parse_mode="Markdown")
 
-    # More Inline Options
     keyboard = [
-        [InlineKeyboardButton("📍 Set Location", callback_data="location"),
-         InlineKeyboardButton("📅 Set Date", callback_data="date")],
-        [InlineKeyboardButton("💰 Set Budget", callback_data="budget"),
-         InlineKeyboardButton("📋 Checklist", callback_data="checklist")],
-        [InlineKeyboardButton("❌ Exit", callback_data="exit")]
+        [InlineKeyboardButton("👗 Themes?", callback_data="theme")],
+        [InlineKeyboardButton("🎶 Entertainment?", callback_data="entertainment")],
+        [InlineKeyboardButton("✅ Checklist", callback_data="checklist")],
+        [InlineKeyboardButton("❌ Exit", callback_data="exit")],
     ]
     await update.message.reply_text(
-        "Would you like to customize or explore more?",
+        "Would you like help with anything else?",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
     return FOLLOWUP
 
-# Follow-up flow
+# Handle follow-up interactions
 async def handle_followup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
-    selection = query.data
+    context.user_data["followup"] = query.data
 
-    if selection == "exit":
-        await query.edit_message_text("👋 Thank you for using EventBot. All the best with your event!")
+    if query.data == "exit":
+        await query.edit_message_text("👋 Thank you for using EventBot. Have a great day!")
         return ConversationHandler.END
 
-    context.user_data["event_type"] = selection
-    await query.edit_message_text(f"📝 Please provide details for: *{selection}*", parse_mode="Markdown")
+    await query.edit_message_text(f"🎯 Great! Now send me a short description for: {query.data}")
     return DESCRIPTION
 
 # Unknown command fallback
 async def unknown_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("❓ I didn’t understand that. Use /start to begin or /help for more info.")
+    await update.message.reply_text("❓ I didn’t understand that. Use /start to begin or /help for guidance.")
 
-# Clean previous webhooks
-def clear_webhook():
+# Async webhook cleaner
+async def clear_webhook():
     try:
-        requests.get(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook")
+        response = requests.get(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook")
+        if response.ok:
+            logger.info("✅ Webhook deleted successfully.")
+        else:
+            logger.warning(f"⚠️ Webhook deletion failed: {response.status_code} - {response.text}")
     except Exception as e:
-        logger.warning("Webhook cleanup failed: %s", e)
+        logger.error(f"❌ Webhook cleanup error: {e}")
 
-# Main App
+# Main entry
 async def main():
-    clear_webhook()
+    await clear_webhook()
+
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
     conv_handler = ConversationHandler(
@@ -196,16 +166,10 @@ async def main():
 
     await app.run_polling()
 
-def main():
-    clear_webhook()
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-
-    # Add all handlers (as you already have)
-
-    app.run_polling()
-
+# Safe event loop startup
 if __name__ == "__main__":
-    main()
-
-
-
+    import asyncio
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        print("🛑 Bot stopped cleanly.")
