@@ -12,7 +12,7 @@
   <style>
     body {
       font-family: 'Outfit', sans-serif;
-      background: url('https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
+      background: url('https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
       background-size: cover;
     }
     .glass {
@@ -37,33 +37,40 @@
       60% { transform: scale(1.05); opacity: 1; }
       100% { transform: scale(1); }
     }
+    .slide-up {
+      animation: slideUp 1.2s ease-out forwards;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body class="text-white">
   <!-- Hero Section -->
   <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center glass fade-in">
-    <h1 class="text-5xl font-bold mb-4 bounce-in">🚀 Plan Memorable Events with AI</h1>
-    <p class="text-xl max-w-2xl mb-6" data-aos="fade-up">From weddings to birthdays, EventBot crafts perfect plans instantly. Powered by GPT + Telegram.</p>
+    <h1 class="text-5xl font-bold mb-4 bounce-in">🎉 AI-Powered Event Planning Made Easy</h1>
+    <p class="text-xl max-w-2xl mb-6" data-aos="fade-up">Plan weddings, birthdays, meetings and more with one smart Telegram message.</p>
     <a href="https://t.me/enigma_event_bot" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-full text-lg transition shadow-lg" data-aos="zoom-in-up">Try It on Telegram</a>
   </section>
 
   <!-- Features -->
   <section class="py-20 bg-black bg-opacity-80">
     <div class="text-center mb-12" data-aos="fade-up">
-      <h2 class="text-3xl font-bold">What Can It Do?</h2>
+      <h2 class="text-3xl font-bold slide-up">What Can It Do?</h2>
     </div>
     <div class="grid md:grid-cols-3 gap-8 px-6 max-w-6xl mx-auto">
-      <div class="glass p-6" data-aos="fade-right">
+      <div class="glass p-6 slide-up" data-aos="zoom-in-right">
         <img src="https://images.unsplash.com/photo-1608580019219-327017867d45" class="rounded-lg mb-4" alt="Birthday">
         <h3 class="text-xl font-semibold text-yellow-300 mb-2">🎂 Birthday Planner</h3>
         <p>AI-powered themes, gifts & fun ideas for every age.</p>
       </div>
-      <div class="glass p-6" data-aos="fade-up">
+      <div class="glass p-6 slide-up" data-aos="zoom-in">
         <img src="https://images.unsplash.com/photo-1600880292089-90e07c6a1b58" class="rounded-lg mb-4" alt="Business">
         <h3 class="text-xl font-semibold text-green-300 mb-2">💼 Business Events</h3>
         <p>Professional plans for team building, launches & more.</p>
       </div>
-      <div class="glass p-6" data-aos="fade-left">
+      <div class="glass p-6 slide-up" data-aos="zoom-in-left">
         <img src="https://images.unsplash.com/photo-1548095115-45697e9922b5" class="rounded-lg mb-4" alt="Wedding">
         <h3 class="text-xl font-semibold text-pink-300 mb-2">💍 Wedding Ideas</h3>
         <p>Dream themes, timelines, vendors—automatically generated.</p>
@@ -71,27 +78,9 @@
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section class="py-16 bg-gradient-to-br from-black via-gray-900 to-black">
-    <div class="text-center mb-10" data-aos="fade-up">
-      <h2 class="text-3xl font-bold">🤔 Frequently Asked Questions</h2>
-    </div>
-    <div class="max-w-4xl mx-auto space-y-6 px-4 text-gray-200 text-lg">
-      <div data-aos="fade-right">
-        <strong>Q: Is EventBot free?</strong><br>Yes. It’s 100% free on Telegram. No sign-up.
-      </div>
-      <div data-aos="fade-left">
-        <strong>Q: What platforms are supported?</strong><br>It works on Android, iOS, and Web Telegram.
-      </div>
-      <div data-aos="fade-right">
-        <strong>Q: Will you support more languages?</strong><br>Yes! Multi-language support coming soon.
-      </div>
-    </div>
-  </section>
-
   <!-- Testimonials -->
   <section class="py-20 bg-black bg-opacity-90">
-    <div class="text-center mb-10" data-aos="fade-up">
+    <div class="text-center mb-10 slide-up" data-aos="fade-up">
       <h2 class="text-3xl font-bold">💬 What Users Say</h2>
     </div>
     <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto px-4">
