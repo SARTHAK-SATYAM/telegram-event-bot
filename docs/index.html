@@ -12,7 +12,7 @@
   <style>
     body {
       font-family: 'Outfit', sans-serif;
-      background: url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=80') no-repeat center center fixed;
+      background: url('https://images.unsplash.com/photo-1603921326210-6edd2d60ca68?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
       background-size: cover;
     }
     .glass {
@@ -20,13 +20,29 @@
       background-color: rgba(255, 255, 255, 0.15);
       border-radius: 1rem;
       border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+    }
+    .fade-in {
+      animation: fadeIn 2s ease-in forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .bounce-in {
+      animation: bounceIn 1.5s ease-out forwards;
+    }
+    @keyframes bounceIn {
+      0% { transform: scale(0.9); opacity: 0; }
+      60% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); }
     }
   </style>
 </head>
 <body class="text-white">
   <!-- Hero Section -->
-  <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center glass">
-    <h1 class="text-5xl font-bold mb-4" data-aos="zoom-in">🚀 Plan Memorable Events with AI</h1>
+  <section class="min-h-screen flex flex-col justify-center items-center px-4 text-center glass fade-in">
+    <h1 class="text-5xl font-bold mb-4 bounce-in">🚀 Plan Memorable Events with AI</h1>
     <p class="text-xl max-w-2xl mb-6" data-aos="fade-up">From weddings to birthdays, EventBot crafts perfect plans instantly. Powered by GPT + Telegram.</p>
     <a href="https://t.me/enigma_event_bot" target="_blank" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-full text-lg transition shadow-lg" data-aos="zoom-in-up">Try It on Telegram</a>
   </section>
