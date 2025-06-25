@@ -196,6 +196,18 @@ async def main():
 
     await app.run_polling()
 
+import asyncio
+
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except RuntimeError as e:
+        if "cannot close a running event loop" in str(e).lower():
+            # Render already has a running loop — fallback to nest_asyncio
+            import nest_asyncio
+            nest_asyncio.apply()
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(main())
+        else:
+            raise
 
