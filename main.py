@@ -196,18 +196,16 @@ async def main():
 
     await app.run_polling()
 
-import asyncio
+def main():
+    clear_webhook()
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+
+    # Add all handlers (as you already have)
+
+    app.run_polling()
 
 if __name__ == "__main__":
-    try:
-        loop = asyncio.get_event_loop_policy().get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+    main()
 
-    try:
-        loop.run_until_complete(main())
-    except (KeyboardInterrupt, SystemExit):
-        pass
 
 
