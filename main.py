@@ -168,14 +168,18 @@ async def main():
         fallbacks=[
             CommandHandler("help", help_command),
             CommandHandler("exit", exit_command),
-        ]
-        
+        ],
+        allow_reentry=True
     )
 
+    # Register handlers
     app.add_handler(conv_handler)
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("exit", exit_command))
-    app.add_handler(MessageHandler(filters.COMMAND, unknown_message))
+
+    # Catch all unexpected messages that are commands
+    app.add_handler(MessageHandler(filters.TEXT & filters.COMMAND, unknown_message))
+
 
     await app.run_polling()
 
