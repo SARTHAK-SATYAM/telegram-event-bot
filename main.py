@@ -49,11 +49,11 @@ async def query_openrouter(prompt):
     payload = {
         "model": "mistralai/mixtral-8x7b-instruct",
         "messages": [
-            {"role": "system", "content": "You are a helpful and concise event planner that responds in bullet points and emojis."},
+            {"role": "system", "content": "You are a helpful and creative event planner who responds in 5-10 short, clear, bullet-pointed suggestions with emojis and ends with a human-sounding follow-up question."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 300,
+        "max_tokens": 400,
     }
 
     try:
@@ -75,10 +75,10 @@ async def query_openrouter(prompt):
 def format_response(raw_text, prompt):
     raw_text = raw_text.replace(prompt, "").strip()
     lines = [line.strip(" .") for line in raw_text.split('\n') if line.strip()]
-    
-    if len(lines) < 3:  # fallback if \n is not used properly
+
+    if len(lines) < 3:
         lines = raw_text.replace('\n', ' ').split('. ')
-    
+
     bullet_points = []
     emojis = ["🎯", "📌", "✨", "💡", "🎉", "📝", "📍", "🗓️", "✅", "📢"]
     for i, line in enumerate(lines):
@@ -89,12 +89,10 @@ def format_response(raw_text, prompt):
         if len(bullet_points) == 10:
             break
 
-    # Fallback if all failed
     if not bullet_points:
         bullet_points.append("❗ Sorry, I couldn't format a proper response. Please rephrase your query.")
 
     return bullet_points
-
 
 # Follow-up Question Suggestions
 def get_follow_up_questions(event_type):
@@ -164,7 +162,7 @@ async def handle_followup(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(1.5)
     await query.message.reply_text(f"📌 Here's your Followup: {followup_text}")
 
-    prompt = f"Answer this event planning query in bullet points with 5-10 useful suggestions. Question: {followup_text}"
+    prompt = f"You are an expert event planner. Give 5-10 humanized, helpful bullet-point suggestions with emojis based on the question: {followup_text}. End with a follow-up question."
     result = await query_openrouter(prompt)
 
     for point in result.split('\n'):
