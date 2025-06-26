@@ -168,8 +168,8 @@ async def main():
         fallbacks=[
             CommandHandler("help", help_command),
             CommandHandler("exit", exit_command),
-        ],
-        per_message=True,
+        ]
+        
     )
 
     app.add_handler(conv_handler)
