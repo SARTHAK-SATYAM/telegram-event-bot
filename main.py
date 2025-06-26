@@ -42,18 +42,29 @@ async def query_huggingface(prompt):
         "inputs": prompt,
         "parameters": {"max_new_tokens": 150, "temperature": 0.7, "do_sample": True},
     }
-    response = requests.post(
-    "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
+    
+    try:
+        response = requests.post(
+            "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",  # or any model you are testing
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
 
-        headers=headers,
-        json=payload,
-    )
-    result = response.json()
-    if isinstance(result, list):
-        return result[0]["generated_text"].strip()
-    elif "error" in result:
-        return "⚠️ AI service is down. Try again soon."
-    return "🤖 Unexpected error occurred."
+        result = response.json()
+        logging.info(f"🤖 HF Raw Response: {json.dumps(result, indent=2)}")
+
+        if isinstance(result, list) and "generated_text" in result[0]:
+            return result[0]["generated_text"].strip()
+        elif "error" in result:
+            return f"⚠️ AI service failed: {result['error'][:100]}"
+        else:
+            return "⚠️ Unexpected response structure."
+    
+    except Exception as e:
+        logger.error(f"🔥 HF API Exception: {e}")
+        return f"⚠️ API Exception: {str(e)}"
+
 
 # Format Output as Bullet Points
 def format_response(raw_text, prompt):
