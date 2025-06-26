@@ -43,7 +43,6 @@ async def query_huggingface(prompt):
         "parameters": {"max_new_tokens": 150, "temperature": 0.7, "do_sample": True},
     }
     response = requests.post(
-        response = requests.post(
     "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",
 
         headers=headers,
