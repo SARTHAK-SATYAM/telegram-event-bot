@@ -29,7 +29,7 @@ GOOGLE_SHEETS_CREDENTIALS = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("creds.json", scope)
 client = gspread.authorize(creds)
-sheet = client.open("EventBot Logs").sheet1
+sheet = client.open("EventBotLogs").sheet1
 
 # Stages
 EVENT_TYPE, DESCRIPTION, FOLLOWUP = range(3)
