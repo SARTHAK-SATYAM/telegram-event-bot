@@ -74,17 +74,27 @@ async def query_openrouter(prompt):
 # Format Output as Bullet Points
 def format_response(raw_text, prompt):
     raw_text = raw_text.replace(prompt, "").strip()
-    lines = raw_text.replace('\n', ' ').split('. ')
+    lines = [line.strip(" .") for line in raw_text.split('\n') if line.strip()]
+    
+    if len(lines) < 3:  # fallback if \n is not used properly
+        lines = raw_text.replace('\n', ' ').split('. ')
+    
     bullet_points = []
-    emojis = ["🎯", "📌", "✨", "💡", "🎉", "📝", "📍"]
+    emojis = ["🎯", "📌", "✨", "💡", "🎉", "📝", "📍", "🗓️", "✅", "📢"]
     for i, line in enumerate(lines):
         line = line.strip().strip('.')
-        if line and len(line) < 200:
+        if line and len(line) < 300:
             emoji = emojis[i % len(emojis)]
             bullet_points.append(f"{emoji} {line}.")
         if len(bullet_points) == 10:
             break
+
+    # Fallback if all failed
+    if not bullet_points:
+        bullet_points.append("❗ Sorry, I couldn't format a proper response. Please rephrase your query.")
+
     return bullet_points
+
 
 # Follow-up Question Suggestions
 def get_follow_up_questions(event_type):
