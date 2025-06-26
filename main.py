@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Get environment variables
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-GOOGLE_SHEETS_CREDENTIALS = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+HF_API_KEY = os.getenv("HUGGINGFACE_API_TOKEN")
+GOOGLE_SHEETS_CREDENTIALS = os.getenv("GOOGLE_SHEET_NAME")
 
 # Setup Google Sheets logging
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -68,54 +68,51 @@ async def handle_event_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def generate_ai_response(description: str, event_type: str) -> str:
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
+        "Authorization": f"Bearer {HF_API_KEY}",
+        "Content-Type": "application/json"
     }
     payload = {
-        "model": "mistralai/mistral-7b-instruct",
-        "messages": [
-            {
-                "role": "system",
-                "content": (
-                    f"You are a warm, friendly, and helpful human-like event planner.\n"
-                    f"Help users plan a {event_type} event with empathy.\n"
-                    "Think before responding. Use human tone, and give clear bullet-point steps.\n"
-                    "Keep replies short and conversational."
-                )
-            },
-            {
-                "role": "user",
-                "content": description
-            }
-        ]
+        "inputs": (
+            f"You are a human-like event planner. Help the user plan a {event_type} event.\n"
+            f"User's description: {description}\n"
+            f"Respond in a warm and friendly tone. Give clear, concise bullet points."
+        )
     }
+
     try:
         start_time = time.time()
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=30)
+        response = requests.post(
+            "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
         duration = time.time() - start_time
-        logger.info(f"⏱️ Response Time: {duration:.2f}s")
+        logger.info(f"⏱️ HF Response Time: {duration:.2f}s")
+
         data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+        if isinstance(data, list):
+            return data[0]["generated_text"].strip()
+        return data.get("generated_text", "❌ Sorry, couldn't process your request.")
     except Exception as e:
-        logger.error(f"⚠️ AI Error: {e}")
-        return "❌ Sorry, something went wrong while planning your event. Please try again."
+        logger.error(f"⚠️ HF API Error: {e}")
+        return "❌ Sorry, something went wrong with AI generation."
 
 async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     description = update.message.text
     event_type = context.user_data.get("event_type", "event")
 
-    # Simulate typing...
     await update.message.chat.send_action(action=ChatAction.TYPING)
     await update.message.reply_text(f"🤔 Okay, give me a sec to plan your *{event_type.capitalize()}* event...", parse_mode="Markdown")
 
     response = await generate_ai_response(description, event_type)
 
-    # Log to Google Sheets
     try:
         sheet.append_row([time.strftime("%Y-%m-%d %H:%M:%S"), update.effective_user.username or update.effective_user.first_name, event_type, description, response])
     except Exception as e:
         logger.warning(f"⚠️ Google Sheets Logging Failed: {e}")
 
+    await update.message.chat.send_action(action=ChatAction.TYPING)
     await update.message.reply_text(f"📅 Here's your *{event_type.capitalize()} Event Plan*:", parse_mode="Markdown")
     await update.message.reply_text(response, parse_mode="Markdown")
 
@@ -184,17 +181,7 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-    import nest_asyncio
-
     try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
-    nest_asyncio.apply()
-
-    try:
-        loop.run_until_complete(main())
+        asyncio.run(main())
     except Exception as e:
         logger.exception(f"🔥 Unhandled Exception in main: {e}")
