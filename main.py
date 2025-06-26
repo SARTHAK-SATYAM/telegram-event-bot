@@ -44,12 +44,14 @@ async def query_huggingface(prompt):
     }
     
     try:
+       # Inside query_huggingface
         response = requests.post(
-            "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta",  # or any model you are testing
-            headers=headers,
-            json=payload,
-            timeout=30
+        "https://api-inference.huggingface.co/models/google/flan-t5-large",
+        headers=headers,
+        json=payload,
+        timeout=30
         )
+
 
         result = response.json()
         logging.info(f"🤖 HF Raw Response: {json.dumps(result, indent=2)}")
