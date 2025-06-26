@@ -37,25 +37,39 @@ sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
 
 # Hugging Face API Call
 async def query_openrouter(prompt):
+    import httpx
+
     headers = {
         "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://t.me/EnigmaEventBot",  # Optional but helpful for rate tracking
     }
 
     payload = {
-        "model": "mistralai/mixtral-8x7b-instruct",  # You can use zephyr, llama3, etc.
+        "model": "mistralai/mixtral-8x7b-instruct",
         "messages": [
-            {"role": "system", "content": "You are a helpful, human-like event planner bot."},
+            {"role": "system", "content": "You are a helpful and concise event planner that responds in bullet points and emojis."},
             {"role": "user", "content": prompt}
-        ]
+        ],
+        "temperature": 0.7,
+        "max_tokens": 300,
     }
 
     try:
-        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=30)
-        data = response.json()
-        return data["choices"][0]["message"]["content"].strip()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=30,
+            )
+            response.raise_for_status()
+            data = response.json()
+            return data["choices"][0]["message"]["content"]
     except Exception as e:
-        return f"⚠️ OpenRouter error: {e}"
+        logger.error(f"⚠️ OpenRouter API Error: {e}")
+        return f"⚠️ AI service failed: {str(e)}"
+
 
 
 # Format Output as Bullet Points
