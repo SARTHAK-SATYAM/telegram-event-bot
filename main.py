@@ -36,36 +36,26 @@ gc = gspread.authorize(credentials)
 sheet = gc.open(GOOGLE_SHEET_NAME).sheet1
 
 # Hugging Face API Call
-async def query_huggingface(prompt):
-    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {"max_new_tokens": 150, "temperature": 0.7, "do_sample": True},
+async def query_openrouter(prompt):
+    headers = {
+        "Authorization": f"Bearer {os.getenv('OPENROUTER_API_KEY')}",
+        "Content-Type": "application/json"
     }
-    
+
+    payload = {
+        "model": "mistralai/mixtral-8x7b-instruct",  # You can use zephyr, llama3, etc.
+        "messages": [
+            {"role": "system", "content": "You are a helpful, human-like event planner bot."},
+            {"role": "user", "content": prompt}
+        ]
+    }
+
     try:
-       # Inside query_huggingface
-        response = requests.post(
-        "https://api-inference.huggingface.co/models/google/flan-t5-large",
-        headers=headers,
-        json=payload,
-        timeout=30
-        )
-
-
-        result = response.json()
-        logging.info(f"🤖 HF Raw Response: {json.dumps(result, indent=2)}")
-
-        if isinstance(result, list) and "generated_text" in result[0]:
-            return result[0]["generated_text"].strip()
-        elif "error" in result:
-            return f"⚠️ AI service failed: {result['error'][:100]}"
-        else:
-            return "⚠️ Unexpected response structure."
-    
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=30)
+        data = response.json()
+        return data["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        logger.error(f"🔥 HF API Exception: {e}")
-        return f"⚠️ API Exception: {str(e)}"
+        return f"⚠️ OpenRouter error: {e}"
 
 
 # Format Output as Bullet Points
@@ -141,7 +131,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.chat.send_action(action="typing")
 
     prompt = f"Suggest a {event_type} event plan in bullet points. Limit to 100 words. Input: {user_query}"
-    result = await query_huggingface(prompt)
+    result = await query_openrouter(prompt)
     formatted_points = format_response(result, prompt)
 
     await update.message.reply_text(f"📅 Here's your *{event_type.title()} Event Plan*:", parse_mode='Markdown')
