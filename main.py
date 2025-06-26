@@ -184,19 +184,17 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
-
-    async def runner():
-        try:
-            await main()
-        except Exception as e:
-            logger.exception(f"🔥 Unhandled Exception in main: {e}")
+    import nest_asyncio
 
     try:
         loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # SAFEST for Render, Jupyter, etc.
-            asyncio.create_task(runner())
-        else:
-            loop.run_until_complete(runner())
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    nest_asyncio.apply()
+
+    try:
+        loop.run_until_complete(main())
     except Exception as e:
-        logger.exception(f"🔥 Fatal startup error: {e}")
+        logger.exception(f"🔥 Unhandled Exception in main: {e}")
