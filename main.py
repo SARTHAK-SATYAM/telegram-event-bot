@@ -65,7 +65,6 @@ async def handle_event_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     context.user_data["event_type"] = event_type
     await query.edit_message_text(f"🎯 Great! Now send me a short description of your {event_type} event.")
     return DESCRIPTION
-
 async def generate_ai_response(description: str, event_type: str) -> str:
     headers = {
         "Authorization": f"Bearer {HF_API_KEY}",
@@ -73,30 +72,40 @@ async def generate_ai_response(description: str, event_type: str) -> str:
     }
     payload = {
         "inputs": (
-            f"You are a human-like event planner. Help the user plan a {event_type} event.\n"
-            f"User's description: {description}\n"
-            f"Respond in a warm and friendly tone. Give clear, concise bullet points."
+            f"You are an expert event planner. Help the user organize a {event_type} event.\n"
+            f"User’s message: {description}\n"
+            f"Respond with bullet points in a clear and friendly manner."
         )
     }
 
     try:
-        start_time = time.time()
         response = requests.post(
             "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct",
             headers=headers,
             json=payload,
             timeout=30
         )
-        duration = time.time() - start_time
-        logger.info(f"⏱️ HF Response Time: {duration:.2f}s")
+        response.raise_for_status()
 
         data = response.json()
-        if isinstance(data, list):
+        logger.info(f"HF Raw Response: {data}")
+
+        # Handles both list and dict responses
+        if isinstance(data, list) and "generated_text" in data[0]:
             return data[0]["generated_text"].strip()
-        return data.get("generated_text", "❌ Sorry, couldn't process your request.")
+        elif isinstance(data, dict) and "generated_text" in data:
+            return data["generated_text"].strip()
+        elif "error" in data:
+            return f"❌ HuggingFace Error: {data['error']}"
+        else:
+            return "❌ Sorry, I didn’t get a valid response from the AI."
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request Error: {e}")
+        return "❌ API request failed. Please try again later."
     except Exception as e:
-        logger.error(f"⚠️ HF API Error: {e}")
-        return "❌ Sorry, something went wrong with AI generation."
+        logger.error(f"Unexpected HF error: {e}")
+        return "❌ An unexpected error occurred while generating the response."
+
 
 async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     description = update.message.text
