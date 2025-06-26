@@ -184,7 +184,21 @@ async def main():
 
 if __name__ == "__main__":
     import asyncio
+
+    async def runner():
+        try:
+            await main()
+        except Exception as e:
+            logger.exception(f"🔥 Unhandled Exception in main: {e}")
+
     try:
-        asyncio.run(main())
-    except Exception as e:
-        logger.exception(f"🔥 Unhandled Exception in main: {e}")
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # Compatible with Render or notebooks
+            import threading
+            threading.Thread(target=lambda: asyncio.run(runner())).start()
+        else:
+            loop.run_until_complete(runner())
+    except RuntimeError as e:
+        logger.exception(f"🔥 RuntimeError: {e}")
+
