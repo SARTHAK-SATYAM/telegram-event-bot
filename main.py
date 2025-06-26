@@ -1,7 +1,11 @@
 import os
 import logging
 import requests
+import time
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ChatAction
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -19,11 +23,17 @@ logger = logging.getLogger(__name__)
 # Get environment variables
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+GOOGLE_SHEETS_CREDENTIALS = os.getenv("GOOGLE_SHEETS_CREDENTIALS")
+
+# Setup Google Sheets logging
+scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
+client = gspread.authorize(creds)
+sheet = client.open("EventBot Logs").sheet1
 
 # Stages
 EVENT_TYPE, DESCRIPTION, FOLLOWUP = range(3)
 
-# Start command
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [
         [InlineKeyboardButton("🎂 Birthday", callback_data='birthday')],
@@ -36,7 +46,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return EVENT_TYPE
 
-# Help command
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "ℹ️ I’m EventBot! Here’s what I can help with:\n"
@@ -45,12 +54,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/exit – Exit the conversation"
     )
 
-# Exit command
 async def exit_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("👋 Thank you for using EventBot. Have a great day!")
     return ConversationHandler.END
 
-# Handle event type selection
 async def handle_event_type(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
@@ -59,18 +66,22 @@ async def handle_event_type(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await query.edit_message_text(f"🎯 Great! Now send me a short description of your {event_type} event.")
     return DESCRIPTION
 
-# AI Response via OpenRouter
 async def generate_ai_response(description: str, event_type: str) -> str:
     headers = {
         "Authorization": f"Bearer {OPENROUTER_API_KEY}",
         "Content-Type": "application/json",
     }
     payload = {
-        "model": "openrouter/auto",
+        "model": "mistralai/mistral-7b-instruct",
         "messages": [
             {
                 "role": "system",
-                "content": f"You are an expert event planner. Help users plan a {event_type} event."
+                "content": (
+                    f"You are a warm, friendly, and helpful human-like event planner.\n"
+                    f"Help users plan a {event_type} event with empathy.\n"
+                    "Think before responding. Use human tone, and give clear bullet-point steps.\n"
+                    "Keep replies short and conversational."
+                )
             },
             {
                 "role": "user",
@@ -79,23 +90,31 @@ async def generate_ai_response(description: str, event_type: str) -> str:
         ]
     }
     try:
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=30,
-        )
+        start_time = time.time()
+        response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=headers, json=payload, timeout=30)
+        duration = time.time() - start_time
+        logger.info(f"⏱️ Response Time: {duration:.2f}s")
         data = response.json()
-        return data["choices"][0]["message"]["content"]
+        return data["choices"][0]["message"]["content"].strip()
     except Exception as e:
-        logger.error(f"AI Error: {e}")
-        return "⚠️ Sorry, I couldn't generate a response at the moment."
+        logger.error(f"⚠️ AI Error: {e}")
+        return "❌ Sorry, something went wrong while planning your event. Please try again."
 
-# Handle event description
 async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     description = update.message.text
     event_type = context.user_data.get("event_type", "event")
+
+    # Simulate typing...
+    await update.message.chat.send_action(action=ChatAction.TYPING)
+    await update.message.reply_text(f"🤔 Okay, give me a sec to plan your *{event_type.capitalize()}* event...", parse_mode="Markdown")
+
     response = await generate_ai_response(description, event_type)
+
+    # Log to Google Sheets
+    try:
+        sheet.append_row([time.strftime("%Y-%m-%d %H:%M:%S"), update.effective_user.username or update.effective_user.first_name, event_type, description, response])
+    except Exception as e:
+        logger.warning(f"⚠️ Google Sheets Logging Failed: {e}")
 
     await update.message.reply_text(f"📅 Here's your *{event_type.capitalize()} Event Plan*:", parse_mode="Markdown")
     await update.message.reply_text(response, parse_mode="Markdown")
@@ -112,7 +131,6 @@ async def handle_description(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
     return FOLLOWUP
 
-# Handle follow-up interactions
 async def handle_followup(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     query = update.callback_query
     await query.answer()
@@ -125,11 +143,9 @@ async def handle_followup(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await query.edit_message_text(f"🎯 Great! Now send me a short description for: {query.data}")
     return DESCRIPTION
 
-# Unknown command fallback
 async def unknown_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("❓ I didn’t understand that. Use /start to begin or /help for guidance.")
 
-# Async webhook cleaner
 async def clear_webhook():
     try:
         response = requests.get(f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/deleteWebhook")
@@ -140,7 +156,6 @@ async def clear_webhook():
     except Exception as e:
         logger.error(f"❌ Webhook cleanup error: {e}")
 
-# Main entry
 async def main():
     await clear_webhook()
 
@@ -157,7 +172,7 @@ async def main():
             CommandHandler("help", help_command),
             CommandHandler("exit", exit_command),
         ],
-        per_message=False  # ✅ Safe option allowing mixed handlers
+        per_message=True,
     )
 
     app.add_handler(conv_handler)
@@ -167,15 +182,9 @@ async def main():
 
     await app.run_polling()
 
-# Safe event loop startup
 if __name__ == "__main__":
-    import nest_asyncio
     import asyncio
-
     try:
-        nest_asyncio.apply()
-        asyncio.get_event_loop().run_until_complete(main())
-    except (KeyboardInterrupt, SystemExit):
-        print("🛑 Bot stopped cleanly.")
-    except RuntimeError as e:
-        logging.exception(f"🔥 Runtime error: {e}")
+        asyncio.run(main())
+    except Exception as e:
+        logger.exception(f"🔥 Unhandled Exception in main: {e}")
