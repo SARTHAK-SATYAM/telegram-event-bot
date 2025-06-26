@@ -80,7 +80,7 @@ async def generate_ai_response(description: str, event_type: str) -> str:
 
     try:
         response = requests.post(
-            "https://api-inference.huggingface.co/models/tiiuae/falcon-7b-instruct",
+            "https://api-inference.huggingface.co/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
             headers=headers,
             json=payload,
             timeout=30
