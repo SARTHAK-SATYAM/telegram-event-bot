@@ -179,9 +179,21 @@ async def main():
 
     await app.run_polling()
 
+# Main runner
 if __name__ == "__main__":
     import asyncio
+    import nest_asyncio
+
     try:
-        asyncio.run(main())
+        loop = asyncio.get_event_loop()
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    nest_asyncio.apply()
+
+    try:
+        loop.run_until_complete(main())
     except Exception as e:
         logger.exception(f"🔥 Unhandled Exception in main: {e}")
+
