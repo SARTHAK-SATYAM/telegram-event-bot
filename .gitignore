@@ -1,0 +1,46 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment folders
+.venv/
+venv/
+env/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# dotenv environment files
+.env
+.env.*
+
+# Google service account credentials
+creds.json
+
+# VS Code settings
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Render deployment cache
+build/
+dist/
+
+# Log files
+*.log
+
+# OS junk files
+Thumbs.db
+ehthumbs.db
+
+# Python egg metadata
+*.egg-info/
+
+# PyInstaller output
+*.spec
+
+# Other ignored Python files
+*.sqlite3
+*.db
